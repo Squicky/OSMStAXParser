@@ -146,7 +146,7 @@ public class OSMStAXParser {
 			//if boundary contains node, put node to hash table 
 			if (longitude >= boundary.getMinLon() && longitude <= boundary.getMaxLon() &&
 				latitude >= boundary.getMinLat() && latitude <= boundary.getMaxLat())
-				boundary.getNodeList().put(id, new OSMNode(longitude,latitude));
+				boundary.getNodeList().put(id, new OSMNode(id, longitude,latitude));
 		}
 	}
 	
@@ -503,27 +503,30 @@ public class OSMStAXParser {
 		//start reading xml data via "stream"
 		try {
 		  parser_loop:
+			  
 			while ( parser.hasNext() ) 
 			{ 
-				//System.out.println( "Event: " + parser.getEventType() );
+				boolean Systemoutprint = false;		
+				  				
+				if (Systemoutprint) System.out.println( "Event: " + parser.getEventType() );
 				switch (parser.getEventType()) 
 				{ 
 				case XMLStreamConstants.START_DOCUMENT: 
-					//System.out.println( "START_DOCUMENT: " + parser.getVersion() ); 
+					if (Systemoutprint) System.out.println( "START_DOCUMENT: " + parser.getVersion() ); 
 					break; 
 
 				case XMLStreamConstants.END_DOCUMENT: 
-					//System.out.println( "END_DOCUMENT: " ); 
+					if (Systemoutprint) System.out.println( "END_DOCUMENT: " ); 
 					parser.close(); 
 					break; 
 
 				case XMLStreamConstants.NAMESPACE: 
-					//System.out.println( "NAMESPACE: " + parser.getNamespaceURI() ); 
+					if (Systemoutprint) System.out.println( "NAMESPACE: " + parser.getNamespaceURI() ); 
 					break; 
 
 				case XMLStreamConstants.START_ELEMENT: 
 					spacer.append( "  " ); 
-					//System.out.println( /*spacer + */ "START_ELEMENT: " + parser.getLocalName() + "\n" ); 
+					if (Systemoutprint) System.out.println( /*spacer + */ "START_ELEMENT: " + parser.getLocalName() + "\n" ); 
 
 					if (parser.getLocalName()=="node")
 					{
@@ -533,7 +536,7 @@ public class OSMStAXParser {
 					else if (parser.getLocalName()=="way"){	 
 						//handle ways
 						wayHandler();
-						//System.out.println("Way!\n");
+						if (Systemoutprint) System.out.println("Way!\n");
 					}
 					else if (parser.getLocalName()=="nd"){
 						//handle node references in ways
@@ -589,11 +592,12 @@ public class OSMStAXParser {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
+
 		Long workingNodeID = new Long(0);
 		
 		//measure time when program starts
 		progStartTime = System.currentTimeMillis();
+		
 		
 		//check arguments
 		if (!checkArgs(args)){
@@ -727,6 +731,9 @@ public class OSMStAXParser {
 						
 						double[] betweenLat = new double[numOSMNodes -2];
 						double[] betweenLon = new double[numOSMNodes -2];
+
+						long[] betweenId = new long[numOSMNodes -2];
+						
 						int[] betweenDistFromEdgeStart = new int[numOSMNodes -2]; 
 						
 						int distance = 0;
@@ -734,18 +741,21 @@ public class OSMStAXParser {
 							
 						double targetlon;
 						double targetlat;
+						long targatid;
 						Long start = workingWay.getStart();
 						double startlon = ((OSMNode)nodeList.get(start)).getLongitute();
 						double startlat = ((OSMNode)nodeList.get(start)).getLatitude();
+						long startid = ((OSMNode)nodeList.get(start)).getId();
 
 						//add the start node to the Graph
-						routingGraph.addNode( ((Integer)nodeIDtoIndex.get(start)).intValue() , startlon, startlat);
+						routingGraph.addNode( ((Integer)nodeIDtoIndex.get(start)).intValue() , startid, startlon, startlat);
 
 						for (int j=1; j<numOSMNodes;j++)
 						{
 							Long target = (Long) workingOSMNodes.elementAt(j);
 							targetlon = ((OSMNode)nodeList.get(target)).getLongitute();
 							targetlat = ((OSMNode)nodeList.get(target)).getLatitude();
+							targatid = ((OSMNode)nodeList.get(target)).getId();
 							nodedist = Tools.distance(startlat,startlon,targetlat,targetlon);
 							distance += nodedist;
 							
@@ -754,25 +764,29 @@ public class OSMStAXParser {
 								//add between nodes lat, lon and dist
 								betweenLat[j-1] = targetlat;
 								betweenLon[j-1] = targetlon;
+								
+								betweenId[j-1] = targatid;
+								
 								betweenDistFromEdgeStart[j-1] = distance;
 							}
 
 							start = target;
 							startlon=targetlon;
 							startlat=targetlat;
+							startid=targatid;
 						}
 						
 						//add the totalStreetLength
 						totalStreetLength+=distance;
 
 						//add the target node to the Graph
-						routingGraph.addNode( ((Integer)nodeIDtoIndex.get(start)).intValue() , startlon, startlat);
+						routingGraph.addNode( ((Integer)nodeIDtoIndex.get(start)).intValue() , startid, startlon, startlat);
 
 						//create the new Edge
-						Edge newEdge = new Edge(workingWay.getMaxSpeed(),workingWay.getCarPermission(),workingWay.getLanes(),
+						Edge newEdge = new Edge(workingWay.getId() ,workingWay.getMaxSpeed(),workingWay.getCarPermission(),workingWay.getLanes(),
 								workingWay.getHighwayType(),workingWay.getName(),
 								((Integer)nodeIDtoIndex.get(workingWay.getTarget())).intValue(),distance,
-								betweenDistFromEdgeStart, betweenLon, betweenLat);
+								betweenDistFromEdgeStart, betweenLon, betweenLat, betweenId);
 
 						//add the Edge to the graph
 						routingGraph.addEdge(((Integer)nodeIDtoIndex.get(workingWay.getStart())).intValue(), 
@@ -783,19 +797,25 @@ public class OSMStAXParser {
 							//first we need to reverse the betweenlists and recalculate the distances!
 							double[] betweenLatRev = new double[numOSMNodes -2];
 							double[] betweenLonRev = new double[numOSMNodes -2];
+							
+							long[] betweenIdRev = new long[numOSMNodes -2];
+							
 							int[] betweenDistFromEdgeStartRev = new int[numOSMNodes -2]; 
 							
 							for (int k=0; k<numOSMNodes -2; k++)
 							{
 								betweenLatRev[k] = betweenLat[numOSMNodes - 3 - k];
 								betweenLonRev[k] = betweenLon[numOSMNodes - 3 - k];
+								
+								betweenIdRev[k] = betweenId[numOSMNodes - 3 - k];
+								
 								betweenDistFromEdgeStartRev[k] = distance - betweenDistFromEdgeStart[numOSMNodes - 3 - k];
 							}
 							
-							newEdge = new Edge(workingWay.getMaxSpeed(),workingWay.getCarPermission(),workingWay.getLanes(),
+							newEdge = new Edge(workingWay.getId(), workingWay.getMaxSpeed(),workingWay.getCarPermission(),workingWay.getLanes(),
 									workingWay.getHighwayType(),workingWay.getName(),
 									((Integer)nodeIDtoIndex.get(workingWay.getStart())).intValue(),distance,
-									betweenDistFromEdgeStartRev, betweenLonRev, betweenLatRev);
+									betweenDistFromEdgeStartRev, betweenLonRev, betweenLatRev, betweenIdRev);
 							//add the Edge to the graph
 							routingGraph.addEdge(((Integer)nodeIDtoIndex.get(workingWay.getTarget())).intValue(), 
 									edgeNumber++, newEdge);
@@ -824,10 +844,16 @@ public class OSMStAXParser {
 				memafter = memUsage(); //check the memusage after building the graph
 				System.out.println("For this graph the runtime uses: "+(memafter-membefore)+" MB");
 
+				String s = "";
+				
 				System.out.println("Writing the " + boundary.getBoundaryName() + ".routing.graph.small to disk!");
 				//and now we try to write the graph to a file
 				File f= new File(boundary.getBoundaryName() + ".routing.graph.small");
-
+				
+				s = boundary.getBoundaryName() + ".routing.graph.small";
+				
+				s = s + "";
+				
 				//measure writing time
 				sectionStartTime = System.currentTimeMillis();
 				
@@ -843,6 +869,9 @@ public class OSMStAXParser {
 					DataOutputStream dos = new DataOutputStream(fos);
 
 					//serialize the routingGraph
+					
+					int ss = dos.size();
+					
 					routingGraph.toDataStream(dos,false);
 					dos.flush();
 					dos.close();

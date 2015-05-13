@@ -15,6 +15,9 @@ public class Node {
 	private double longitude; //needs to be double to reflect osm data exactly else 
 	  						  //lat=51.1527874 get to be lat=51.1527876 ...
 	private double latitude;
+	
+	private long id;
+	
 	private Vector<Integer> edges = new Vector<Integer>();
 	
 	/**
@@ -22,10 +25,11 @@ public class Node {
 	 * @param longitude
 	 * @param latitude
 	 */
-	public Node(double longitude, double latitude) {
+	public Node(long id, double longitude, double latitude) {
 		super();
 		this.longitude = longitude;
 		this.latitude = latitude;
+		this.id = id;
 	}
 	
 	/**
@@ -36,10 +40,12 @@ public class Node {
 		edges.add(new Integer(edge));
 	}
 
+/*	
 	public void normalize(double minlat, double maxlat, double minlon, double maxlon, double from, double to){
 		longitude = from + (longitude - minlon) / (maxlon - minlon) * (to - from);
 		latitude = from + (latitude - minlat) / (maxlat - minlat) * (to - from);
 	}
+*/
 	
 	/**
 	 * @return the longitude
@@ -78,15 +84,20 @@ public class Node {
 	public void toDataStream(DataOutputStream dos) throws IOException 
 	{
 		//first we write long und lat
-		dos.writeDouble(longitude);
-		dos.writeDouble(latitude);
+		int s = dos.size();
+		dos.writeLong(id); System.out.println(id);
+		s = dos.size();
+		dos.writeDouble(longitude); System.out.println(longitude);
+		dos.writeDouble(latitude); System.out.println(latitude);
 		
 		//now we write how many edges start at this node
-		dos.writeInt(edges.size());
+		dos.writeInt(edges.size()); System.out.println(edges.size());
 		
 		//now we write the indexArray of the edges
-		for(int i=0; i<edges.size();i++)
+		for(int i=0; i<edges.size();i++) {
 			dos.writeInt(((Integer)edges.elementAt(i)).intValue());
+			System.out.println(((Integer)edges.elementAt(i)).intValue());			
+		}
 	}
 	
 }

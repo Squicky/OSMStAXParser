@@ -11,6 +11,8 @@ import java.io.IOException;
  */
 public class Edge {//extends QueueNode{
 
+	private long id = 0;
+	
 	private int osmMaxSpeed; // as taken from osm data or guessed by the parser
 	private int carPermission; //0 = notallowed, 1 = restricted, 2 = allowed
 	private int lanes=0;	//how many lanes does this way have?
@@ -21,6 +23,8 @@ public class Edge {//extends QueueNode{
 	private int[] betweenDistFromStart;
 	private double[] betweenLat;
 	private double[] betweenLon;
+	private long[] betweenId;
+	
 	
 	/**
 	 * Constructor for a new Edge
@@ -32,9 +36,12 @@ public class Edge {//extends QueueNode{
 	 * @param targetNode
 	 * @param length
 	 */
-	public Edge(int osmMaxSpeed, int carPermission, int lanes, int highwayType,
-			String name, int targetNode, int length, int[] betweenDist, double[] betweenLon, double[] betweenLat) {
+	public Edge(long id, int osmMaxSpeed, int carPermission, int lanes, int highwayType,
+			String name, int targetNode, int length, int[] betweenDist, double[] betweenLon, double[] betweenLat, long[] betweenId) {
 		super();
+		
+		this.id = id;
+		
 		this.osmMaxSpeed = osmMaxSpeed;
 		this.carPermission = carPermission;
 		this.lanes = lanes;
@@ -45,6 +52,7 @@ public class Edge {//extends QueueNode{
 		this.betweenDistFromStart=betweenDist;
 		this.betweenLon = betweenLon;
 		this.betweenLat = betweenLat;
+		this.betweenId = betweenId;
 	}
 
 	/**
@@ -104,6 +112,8 @@ public class Edge {//extends QueueNode{
 	 */
 	public void toDataStream(DataOutputStream dos, boolean large) throws IOException 
 	{
+		dos.writeLong(id);
+		
 		dos.writeInt(osmMaxSpeed); 
 		dos.writeInt(carPermission);
 		dos.writeInt(lanes);
@@ -117,6 +127,8 @@ public class Edge {//extends QueueNode{
 			dos.writeInt(betweenLat.length);
 			for (int i=0; i< betweenLat.length; i++)
 			{
+				dos.writeLong(betweenId[i]);
+				
 				dos.writeDouble(betweenLon[i]);
 				dos.writeDouble(betweenLat[i]);
 				dos.writeInt(betweenDistFromStart[i]);

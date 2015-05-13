@@ -228,7 +228,7 @@ public class GPSTrace {
 			
 			while((line = bReader.readLine()) != null){
 				//readed line must confirm to pattern
-				if (gpsPattern.matcher(line).matches()){
+				if (gpsPattern.matcher(line).matches() || line.startsWith("2014-")){
 					gpsData = gpsSplitPattern.split(line);
 					
 					//ignore first field (timestamp), read latitude/longitude

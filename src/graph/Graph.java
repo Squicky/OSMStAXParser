@@ -55,6 +55,32 @@ public class Graph {
 	 * @param latitude
 	 * @param longitude
 	 */
+	public void addNode(int index, long id, double longitude, double latitude){
+		//only add the node if it has not already been added to the graph
+		if (nodes[index]==null)
+		{
+			nodes[index]= new Node(id, longitude,latitude);
+			
+			//check if we have new min or max long/lat for this graph
+			if (longitude < minLon)
+				minLon = longitude;
+			else if (longitude + safety > maxLon)
+				maxLon = longitude + safety;
+			if (latitude < minLat)
+				minLat = latitude;
+			else if (latitude + safety > maxLat)
+				maxLat = latitude + safety;
+		}
+	}
+	
+	/**
+	 * Adds a node to the graph as long as the node is not already present in the 
+	 * nodes Array
+	 * @param index
+	 * @param latitude
+	 * @param longitude
+	 */
+	/*
 	public void addNode(int index, double longitude, double latitude){
 		//only add the node if it has not already been added to the graph
 		if (nodes[index]==null)
@@ -72,7 +98,7 @@ public class Graph {
 				maxLat = latitude + safety;
 		}
 	}
-	
+*/
 	/**
 	 * Prints max/min longitude/latitude for debugging
 	 */
@@ -100,6 +126,7 @@ public class Graph {
 		System.out.println("Nachher: "+minLa+" "+maxLa+" "+minLo+" "+maxLo);
 	}
 	
+/*	
 	public void normalize(double from, double to){
 		for (int i=0; i<nodes.length; i++)
 			nodes[i].normalize(minLat,maxLat,minLon,maxLon,from,to);
@@ -108,6 +135,7 @@ public class Graph {
 		minLon = from;
 		maxLon = to;
 	}
+*/
 	
 	public int nodeCount(){
 		return nodes.length;
@@ -135,20 +163,23 @@ public class Graph {
 	{
 		//first we store if this is a routing.graph.small=0 or routing.graph.large=1
 		if (large)
-			dos.writeInt(1);
+		{			dos.writeInt(1); System.out.println(1); }
 		else
 			dos.writeInt(0);
 		
 		//first we export the dimensions of the graph
-		dos.writeInt(nodes.length);
-		dos.writeInt(edges.length);
+		dos.writeInt(nodes.length); System.out.println(nodes.length);
+		dos.writeInt(edges.length); System.out.println(edges.length);
 		
 		//now we export the min/max coordinates used in this graph
-		dos.writeDouble(this.minLat);
-		dos.writeDouble(this.maxLat);
-		dos.writeDouble(this.minLon);
-		dos.writeDouble(this.maxLon);
-	
+		dos.writeDouble(this.minLat); System.out.println(this.minLat);
+		dos.writeDouble(this.maxLat); System.out.println(this.maxLat);
+		dos.writeDouble(this.minLon); System.out.println(this.minLon);
+		
+		int s = dos.size();
+		dos.writeDouble(this.maxLon); System.out.println(this.maxLon);
+		s = dos.size();
+		
 		//now we export the nodes list
 		for (int i=0;i<nodes.length;i++){
 			nodes[i].toDataStream(dos);
