@@ -678,7 +678,6 @@ public class OSMStAXParser {
 				//STEP 2: count how many nodes and edges the graph will get
 				//so we can initialize the graph structure as needed
 				Hashtable<Long, Integer> nodeIDtoIndex = new Hashtable<Long, Integer>();
-
 				
 				for(OSMWay workingWay : routingWays){
 					//if desired mean of transport can use this way, add to graph
